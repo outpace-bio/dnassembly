@@ -5,11 +5,13 @@ Modified from code originally written by Will DeLoache.
 """
 
 import sys, os
+import copy
 import pdb
 from Bio import SearchIO, SeqIO
 #from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 from Bio.Restriction import BsmBI, BbsI, BsaI, Restriction, FormattedSeq
+import more_itertools
 
 from .GGfrag import *
 from .MergeSegments import *
@@ -182,12 +184,6 @@ class GGpart():
 				#Combine adjacent Oligo Assemblies if possible
 				if self.method in ["None", "Oligo Assembly"]:
 					self.mergeOligoAssemblies()
-				try:
-					self.vectorDigest = entryVectorDigests[self.vectorName]
-					self.vectorSeq = entryVectors[self.vectorName]
-				except:
-					self.vectorDigest = ""
-					self.vectorSeq = ""
 
 				self.assembled_plasmid = self.performPartAssembly(part_entry_vector)
 
@@ -334,20 +330,16 @@ class GGpart():
 			self.GGfrags = divideBySize(self.GGfrags[0], allowableSize)
 		else:
 			self.GGfrags = divideByIndexTuples(self.GGfrags[0], self.removeRS_tuples) #Uppercase should come from the removeRS
-			self._mergeFragments() #
+			self._mergeFragments()
 			### Split sequence without template into gBlock sized chunks###
 			if self.method == "None":
 				tempFrags = []
 				for index, each in enumerate(self.GGfrags):
-					print(each.fiveprimeOH, each.fiveprimeExt, each.seq, each.threeprimeExt, each.threeprimeOH)
-					# todo: Check to see if template exists in Benchling Registry
-					print('SUBMITTED SEQ:', each.seq)
 					results = searchSeqBenchling(each.seq)
 					if results:
 						for i in range(len(results)):
 							if results[i]['entityRegistryId']:
 								alias = results[i]['entityRegistryId']
-
 							else:
 								alias = results[i]['name']
 
@@ -355,11 +347,22 @@ class GGpart():
 							#linear = not(results[i]['isCircular'])
 							self.possibleTemplates[alias] = seq
 
+<<<<<<< HEAD
 					if not findTemplate(each.seq, self.possibleTemplates):
 						#if len(each) > 2100:
 							#each.forced_method = "PCA"
 							#tempFrags += divideBySize(each, PCAMaxSize - 24)
 						if len(each)  < gBlockMinSize:
+=======
+					if findTemplate(each.seq, self.possibleTemplates):
+						each.forced_method = "PCR"
+						tempFrags.append(each)
+					else:
+						if len(each) > 2100:
+							each.forced_method = "PCA"
+							tempFrags += divideBySize(each, PCAMaxSize - 24)
+						elif len(each) < gBlockMinSize:
+>>>>>>> e1934d4431094b92f971a86b6e49bd2e0f2bcfe3
 							each.forced_method = "Oligo Assembly"
 							tempFrags += [each]
 						#If length is just over gBlock length, make the assembly include one oligo assembly to save on a gBlock
@@ -378,9 +381,46 @@ class GGpart():
 						else:
 							each.forced_method = "gBlocks"
 							tempFrags += divideBySize(each, gBlockMaxSize - 24)
-					else:
-						tempFrags.append(each)
+
 				self.GGfrags = tempFrags
+
+		# Merge adjacent gBlocks
+		def gblock_merge():
+			core_seq = ''
+			for is_first, is_last, item in more_itertools.mark_ends(merged_seq):
+				if is_first:
+					fiveprimeOH = item.fiveprimeOH
+					extension_5 = item.fiveprimeExt
+				if is_last:
+					extension_3 = item.threeprimeExt
+					threeprimeOH = item.threeprimeOH
+				if not is_first:
+					core_seq += item.fiveprimeExt
+				core_seq += item.seq
+				if not is_last:
+					core_seq += item.threeprimeExt
+
+			merged_frag = Part.GGfrag(fiveprimeOH=fiveprimeOH, fiveprimeExt=extension_5, seq=core_seq,
+									  threeprimeExt=extension_3, threeprimeOH=threeprimeOH, forced_method="gBlocks")
+			tempFrags.append(merged_frag)
+
+
+		if len(self.GGfrags) > 1:
+			print('Attempting to merge gBlocks')
+			tempFrags = []
+			merged_seq = []
+			for frag in self.GGfrags:
+				if frag.forced_method == "gBlocks":
+					merged_seq.append(frag)
+				else:
+					if len(merged_seq) > 0:
+						gblock_merge()
+						merged_seq = []
+					tempFrags.append(frag)
+			if len(merged_seq) > 0:
+				gblock_merge()
+			self.GGfrags = tempFrags
+
 		self.pickGGfragOHs()
 		if self.maxOverhangConstraints > 12:
 			self.warnings.append("Due to its complexity, this assembly uses overhangs that are somewhat similar and may be prone to misannealing.")
@@ -402,12 +442,6 @@ class GGpart():
 			newSeg = [fragment.fiveprimeOH + fragment.fiveprimeExt, fragment.seq, fragment.threeprimeExt + fragment.threeprimeOH]
 			segments.append(newSeg)
 		mergedSegs = mergeSegments(segments, maxPrimerLength, annealingLength)
-
-		from pprint import pprint
-		print('segments')
-		pprint(segments)
-		print('merged segments')
-		pprint(mergedSegs)
 
 		#convert segments into GGfrags
 		newFrags = []
@@ -509,13 +543,15 @@ class GGpart():
 
 		:param part_entry_vector: Plasmid instance for part entry vector
 		"""
-		part_assembly = StickyEndAssembly(self.GGfrags + [part_entry_vector], [BsmBI])
+		input_fragments = copy.deepcopy(self.GGfrags)
+		part_assembly = StickyEndAssembly(input_fragments + [part_entry_vector], [BsmBI])
 		part_assembly.digest()
 		assembled_part = part_assembly.perform_assembly()
 		return assembled_part
 
 	def getAssemblyInstructions(self):
 		assemIns = []
+<<<<<<< HEAD
 		results = self.getPrimersAndMethods()
 
 		primers = results[0]
@@ -524,6 +560,13 @@ class GGpart():
 		for i, fragment in enumerate(self.GGfrags):
 			#pdb.set_trace()
 			assemIns.append(AssemblyInstructions(methods[i], primers[i], fragment, self.possibleTemplates))
+=======
+		primers, methods = self.getPrimersAndMethods()
+		# pdb.set_trace()
+
+		for primer_set, method, fragment in zip(primers, methods, self.GGfrags):
+			assemIns.append(AssemblyInstructions(method, primer_set, fragment, self.possibleTemplates))
+>>>>>>> e1934d4431094b92f971a86b6e49bd2e0f2bcfe3
 		return assemIns
 
 	def getPrimersAndMethods(self):
@@ -532,7 +575,11 @@ class GGpart():
 		#pdb.set_trace()
 		for each in self.GGfrags:
 			if each.forced_method == "gBlocks":
+<<<<<<< HEAD
 				primers.append([])
+=======
+				primers.append(['',''])
+>>>>>>> e1934d4431094b92f971a86b6e49bd2e0f2bcfe3
 				methods.append("gBlocks")
 			elif each.forced_method == "Oligo Assembly":
 				primers.append(getOligoAssemPrimers(each, self.maxPrimerLength))
@@ -544,8 +591,13 @@ class GGpart():
 					message = "PCR templates could not be found for this assembly. If you have a template, add it to the templates text box. If you don't have a template, consider using an assembly method other than PCR."
 					if message not in self.errors:
 						self.errors.append(message)
+<<<<<<< HEAD
 			elif each.forced_method == "None":
 				if not findTemplate(each.seq, self.possibleTemplates): #Change - if no template, then
+=======
+			else:
+				if not self.possibleTemplates: #Change - if no template, then
+>>>>>>> e1934d4431094b92f971a86b6e49bd2e0f2bcfe3
 					if len(each) <= gBlockMinSize:
 						primers.append(getOligoAssemPrimers(each, self.maxPrimerLength))
 						methods.append("Oligo Assembly")
@@ -553,7 +605,7 @@ class GGpart():
 						#primers.append(each.getPCAprimers(self.maxPrimerLength))
 						#methods.append("PCA")
 					else:
-						primers.append([])
+						primers.append(['',''])
 						methods.append("gBlocks")
 				else:
 					if len(each) <= oligoAssemblySize:
@@ -562,4 +614,4 @@ class GGpart():
 					else:
 						primers.append(getPCRprimers(each, self.maxPrimerLength, annealingLength, oligoTM=oligoTM))
 						methods.append("PCR")
-		return (primers, methods)
+		return primers, methods

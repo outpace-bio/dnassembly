@@ -4,7 +4,7 @@ import json
 baseURL = "https://outpacebiotest.benchling.com/api/" #testURL
 #baseURL = "https://outpacebio.benchling.com/api/" #realURL
 
-key = #testkey
+key = "sk_6O7UksezwhYL8kOKP9PJGy5RxP50d"
 #key = #realkey
 
 # These are the backend locations of things in benchlingAPI
