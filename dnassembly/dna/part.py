@@ -23,7 +23,7 @@ class Part(DNA):
     """
 
     def __init__(self, sequence, entity_id=None, name=None, features=None, description=None, source=None, overhang_5=None,
-                 overhang_3=None, extension_5=None, extension_3=None, forced_method=None):
+                 overhang_3=None, extension_5=None, extension_3=None, forced_method="None"):
         """
         :param sequence: string representation of dsDNA 5' -> 3'
         :param entity_id: string, systematic identification of this Part
@@ -97,7 +97,7 @@ class Part(DNA):
     @classmethod
     def define_overhangs(cls, sequence, l_overhang_strand=None, l_overhang_bases=0, r_overhang_strand=None, r_overhang_bases=0,
                          entity_id=None, name=None, features=None, description=None, source=None, extension_5=None, extension_3=None,
-                         forced_method=None):
+                         forced_method="None"):
         """
         Alternative constructor where sticky ends may be defined in a more conventional/intuitive way... a la BioPython.
         Left and right refer to the 5' and 3' ends of the DNA, respectively. The left and right terminology is used here
@@ -154,7 +154,7 @@ class Part(DNA):
                    overhang_3=overhang_3, overhang_5=overhang_5, extension_5=extension_5, extension_3=extension_3, forced_method=forced_method)
 
     @classmethod
-    def GGfrag(cls, fiveprimeOH="", fiveprimeExt="", seq="", threeprimeExt="",  threeprimeOH="", forced_method=False,
+    def GGfrag(cls, fiveprimeOH="", fiveprimeExt="", seq="", threeprimeExt="",  threeprimeOH="", forced_method="None",
                entity_id=None, name=None, features=None, description=None, source=None):
         """Alternative construtor for Parts using PartDesigner GGFrag notation
         GGFrag seems to assume Type II restriction enzymes are always used, so overhang tuple is (4, 5)
@@ -185,8 +185,8 @@ class Part(DNA):
                 self.fiveprimeExt = self.sequence[-extension_5:]
             else:
                 self.fiveprimeExt = self.sequence[self.overhang_5[0]:extension_5+self.overhang_5[0]]
-        
-        self.threeprimeOH = "" if self.overhang_3 is None else self.sequence[-self.overhang_3[0]:]      
+
+        self.threeprimeOH = "" if self.overhang_3 is None else self.sequence[-self.overhang_3[0]:]
         if extension_3 == 0:
             self.threeprimeExt = ""
         else:
@@ -194,7 +194,7 @@ class Part(DNA):
                 self.threeprimeExt = self.sequence[-extension_3:]
             else:
                 self.threeprimeExt = self.sequence[-(extension_3+self.overhang_3[0]):-self.overhang_3[0]]
-                
+
         self.seq = self.sequence[(len(self.fiveprimeOH)+len(self.fiveprimeExt)):(len(self.sequence)-(len(self.threeprimeOH)+len(self.threeprimeExt)))]
 
     # --- Methods --- #

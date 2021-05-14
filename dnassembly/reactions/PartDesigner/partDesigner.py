@@ -333,7 +333,6 @@ class GGpart():
 			self.GGfrags[0].forced_method = self.method
 			self.GGfrags = divideBySize(self.GGfrags[0], allowableSize)
 		else:
-			#pdb.set_trace()
 			self.GGfrags = divideByIndexTuples(self.GGfrags[0], self.removeRS_tuples) #Uppercase should come from the removeRS
 			self._mergeFragments() #
 			### Split sequence without template into gBlock sized chunks###
@@ -357,10 +356,10 @@ class GGpart():
 							self.possibleTemplates[alias] = seq
 
 					if not findTemplate(each.seq, self.possibleTemplates):
-						if len(each) > 2100:
-							each.forced_method = "PCA"
-							tempFrags += divideBySize(each, PCAMaxSize - 24)
-						elif len(each)  < gBlockMinSize:
+						#if len(each) > 2100:
+							#each.forced_method = "PCA"
+							#tempFrags += divideBySize(each, PCAMaxSize - 24)
+						if len(each)  < gBlockMinSize:
 							each.forced_method = "Oligo Assembly"
 							tempFrags += [each]
 						#If length is just over gBlock length, make the assembly include one oligo assembly to save on a gBlock
@@ -518,33 +517,35 @@ class GGpart():
 	def getAssemblyInstructions(self):
 		assemIns = []
 		results = self.getPrimersAndMethods()
-		#pdb.set_trace()
-		primers = results[0]
-		methods = results[1][0]
 
-		for fragment in self.GGfrags:
-			assemIns.append(AssemblyInstructions(methods, primers, fragment, self.possibleTemplates))
+		primers = results[0]
+		methods = results[1]
+
+		for i, fragment in enumerate(self.GGfrags):
+			#pdb.set_trace()
+			assemIns.append(AssemblyInstructions(methods[i], primers[i], fragment, self.possibleTemplates))
 		return assemIns
 
-	def getPrimersAndMethods(self): #Can a single fragment have multiple assembly methods/primers?
+	def getPrimersAndMethods(self):
 		primers = []
 		methods = []
+		#pdb.set_trace()
 		for each in self.GGfrags:
-			if self.method == "gBlocks":
+			if each.forced_method == "gBlocks":
 				primers.append([])
 				methods.append("gBlocks")
-			elif self.method == "Oligo Assembly":
+			elif each.forced_method == "Oligo Assembly":
 				primers.append(getOligoAssemPrimers(each, self.maxPrimerLength))
 				methods.append("Oligo Assembly")
-			elif self.method == "PCR":
+			elif each.forced_method == "PCR":
 				primers.append(getPCRprimers(each, self.maxPrimerLength, annealingLength, oligoTM=oligoTM))
 				methods.append("PCR")
 				if not findTemplate(each.seq, self.possibleTemplates):
 					message = "PCR templates could not be found for this assembly. If you have a template, add it to the templates text box. If you don't have a template, consider using an assembly method other than PCR."
 					if message not in self.errors:
 						self.errors.append(message)
-			elif self.method == "None":
-				if not self.possibleTemplates: #Change - if no template, then
+			elif each.forced_method == "None":
+				if not findTemplate(each.seq, self.possibleTemplates): #Change - if no template, then
 					if len(each) <= gBlockMinSize:
 						primers.append(getOligoAssemPrimers(each, self.maxPrimerLength))
 						methods.append("Oligo Assembly")
