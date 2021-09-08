@@ -31,6 +31,8 @@ def write_genbank(ipnut_dna, output='new_assembly.gb', to_stream=True):
     """
     input_as_biopython = convert_dnassembly_to_biopython(ipnut_dna)
 
+    print("input_as_biopython", type(input_as_biopython), input_as_biopython)
+
     if to_stream:
         SeqIO.write(input_as_biopython, output, "gb")
     else:
