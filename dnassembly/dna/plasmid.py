@@ -19,6 +19,7 @@ class Plasmid(DNA):
         super().__init__(sequence, entity_id=entity_id, name=name, features=features, description=description, source=source)
         self.feature_map = None  # Populated by map_features method
 
+    # seems to be represented wrong to be taken as genbank file
     def __repr__(self):
         return f'\nPlasmid:\t{self.entity_id}\t\t{self.name}\t\tlength: {len(self.sequence)}\n' \
                f'{self.description:<80}\n' \
