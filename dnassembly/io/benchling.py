@@ -1,3 +1,5 @@
+# TODO - remove when performing IO module refactoring
+
 #! /usr/bin/env python3
 
 from Bio import SeqIO

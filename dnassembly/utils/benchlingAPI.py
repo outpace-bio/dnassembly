@@ -1,12 +1,14 @@
 import requests
 import json
 import os
+from .http_status import HTTPStatus
+from typing import List, Tuple
 
-#baseURL = "https://outpacebiotest.benchling.com/api/" #testURL
-#baseURL = "https://outpacebio.benchling.com/api/" #realURL
-baseURL = os.environ.get('BENCHLING_URL')
+#BASE_URL = "https://outpacebiotest.benchling.com/api/" #testURL
+#BASE_URL = "https://outpacebio.benchling.com/api/" #realURL
+BASE_URL = os.environ.get('BENCHLING_URL')
 
-apiVersion = os.environ.get('BENCHLING_API_VERSION')
+API_VERSION = os.environ.get('BENCHLING_API_VERSION')
 
 #key = #testkey
 key =  os.environ.get('BENCHLING_API_KEY') #realkey
@@ -20,8 +22,8 @@ newSeq["namingStrategy"] = os.environ.get('SEQ_NAMING_STRAT')
 newSeq["registryId"] = os.environ.get('SEQ_REGISTRY_ID') #Outpace Registry
 newSeq["schemaId"] = os.environ.get('SEQ_SCHEMA_ID') #ID code for Plasmid
 project = {"value": [os.environ.get('BENCHLING_PROJ_ID')]} #MoClo Project
-carb = os.environ.get('CARB') #Real
-kan = os.environ.get('KAN') #Real
+CARB = os.environ.get('CARB') #Real
+KAN = os.environ.get('KAN') #Real
 
 #Test Registry
 #newSeq["folderId"] = "lib_1A6kl8LI" #Test, does this value change for each folder within a project?
@@ -43,30 +45,57 @@ newPart["schemaId"] = os.environ.get('PART_SCHEMA_ID') #ID code for DNA Part
 #newPart["schemaId"] = "" #ID code for DNA Part
 
 class BadRequestException(Exception):
-    def __init__(self, message, rv):
+    #TODO - figure out rv type
+    def __init__(self, message: str, rv):
         super(BadRequestException, self).__init__(message)
         self.rv = rv
 
-def getBenchling(path, query):
-    #request = f"{baseURL}{apiVersion}/{path}{query}"
-    request = baseURL+'v2/'+path+query
-    r = requests.get(request, auth=(key,"")) #real version
+def handle_response(res: requests.Response) -> requests.Response:
+    """
+    Catches response codes indicating a fault and raises a
+    BadRequestException, otherwise no action is taken.
 
-    if r.status_code >= 400:
+    Args:
+        res (requests.Response): Response from a HTTP/HTTPS request
+
+    Raises:
+        BadRequestException: [description]
+
+    Returns:
+        requests.Response: Response from executed HTTP/HTTPS request
+    """
+    if res.status_code >= HTTPStatus.BAD_REQUEST:
         raise BadRequestException(
             "Server returned status {}. Response:\n{}".format(
-                r.status_code, json.dumps(r.json())
+                res.status_code, json.dumps(res.json())
             ),
-            r,
+            res,
         )
 
-    return r.json()
+    return res
 
-def postSeqBenchling(bases, name, assembly_type, assembledFrom='', assembledFromID=''):
-    #request = f"{baseURL}{apiVersion}/dna-sequences"
-    request = baseURL+'v2/dna-sequences'
+def getBenchling(api_endpoint: str, query: str):
+    """
+    Sends a GET request to the Benchling tenant
 
-    newSeq["bases"] = bases
+    Args:
+        api_endpoint (str): endpoint to query
+        query (str): query parameters to add to the specified endpoint
+
+    Returns:
+        [a]: Results of the query
+    """
+    request = f"{BASE_URL}{API_VERSION}/{api_endpoint}{query}"
+    res = requests.get(request, auth=(key,""))
+
+    handle_response(res)
+
+    return res.json()
+
+def postSeqBenchling(squence_bases: str, name: str, assembly_type: str, assembledFrom: str = '', assembledFromID: str = ''):
+    request = f"{BASE_URL}{API_VERSION}/dna-sequences"
+
+    newSeq["bases"] = squence_bases
     newSeq["name"] = name
 
     #Test
@@ -76,16 +105,20 @@ def postSeqBenchling(bases, name, assembly_type, assembledFrom='', assembledFrom
 
     #Real
     if assembly_type == 'cassette': #Set the antibiotic to Carb for Stage 2
-        resistance = {"value": carb}
-
+        resistance = { "value": CARB }
     else: #Set the antibiotic to Kan for both Stage 1 and Stage 3
-        resistance = {"value": kan}
+        resistance = { "value": KAN }
 
     MoClo_Assembled_From = {"value": assembledFrom}
     MoClo_Assembled_From_seqID = {"value": assembledFromID}
 
     #Set the fields
-    newSeq["fields"] = {"Antibiotic Resistance": resistance, "Project": project, "MoClo_Assembled_From": MoClo_Assembled_From, "MoClo_Assembled_From_seqID": MoClo_Assembled_From_seqID}
+    newSeq["fields"] = {
+        "Antibiotic Resistance": resistance,
+        "Project": project,
+        "MoClo_Assembled_From": MoClo_Assembled_From,
+        "MoClo_Assembled_From_seqID": MoClo_Assembled_From_seqID
+    }
 
     if assembly_type == 'cassette': #Set location to the parent Stage 2 folder
         newSeq["folderId"] = 'lib_lIpZ86uz'
@@ -120,94 +153,107 @@ def postSeqBenchling(bases, name, assembly_type, assembledFrom='', assembledFrom
         else:
             newSeq["folderId"] = 'lib_kCnFLwBS' #Send to the parent Stage 1 folder
 
-    r = requests.post(request, json=newSeq, auth=(key,""))
+    res = requests.post(request, json=newSeq, auth=(key,""))
 
-    if r.status_code >= 400:
-        raise BadRequestException(
-            "Server returned status {}. Response:\n{}".format(
-                r.status_code, json.dumps(r.json())
-            ),
-            r,
-        )
+    handle_response(res)
 
-    return r.json()
+    return res.json()
 
-def postPartBenchling(bases, name, partType):
-    #request = f"{baseURL}{apiVersion}/dna-sequences"
-    request = baseURL+'v2/dna-sequences'
+def postPartBenchling(squence_bases: str, name: str, part_type: str):
+    """
+    Sends a POST request to the Benchling tenant to create a new
+    part
 
-    newPart["bases"] = bases
+    Args:
+        squence_bases (str): [description]
+        name (str): [description]
+        part_type (str): [description]
+
+    Returns:
+        [type]: [description]
+    """
+
+    request = f"{BASE_URL}{API_VERSION}/dna-sequences"
+
+    newPart["bases"] = squence_bases
     newPart["name"] = name
 
+    #TODO - have folderId as environment variable
     newPart["folderId"] = 'lib_R5pTYwpd' #Sends part to DNA Part Folder
 
-    if partType.strip() in ['1']:
-        DNAtype = {"value": 'sfso_ZIYN45Gl'}
+    if part_type.strip() in ['1']:
+        DNA_type = {"value": 'sfso_ZIYN45Gl'}
 
-    elif partType.strip() in ['2a','2b']:
-        DNAtype = {"value": 'sfso_xvdSPEIX'}
+    elif part_type.strip() in ['2a','2b']:
+        DNA_type = {"value": 'sfso_xvdSPEIX'}
 
-    elif partType.strip() in ['3a','3b','3c','3d','3e']:
-        DNAtype = {"value": 'sfso_a5vEtqm5'}
+    elif part_type.strip() in ['3a','3b','3c','3d','3e']:
+        DNA_type = {"value": 'sfso_a5vEtqm5'}
 
-    elif partType.strip() in ['4a','4b']:
-        DNAtype = {"value": "sfso_U3jQSIjd"}
+    elif part_type.strip() in ['4a','4b']:
+        DNA_type = {"value": "sfso_U3jQSIjd"}
 
-    elif partType.strip() in ['5']:
-        DNAtype = {"value": 'sfso_gyH8kxAF'}
+    elif part_type.strip() in ['5']:
+        DNA_type = {"value": 'sfso_gyH8kxAF'}
 
-    elif partType.strip() in ['6','7']:
-        DNAtype = {"value": 'sfso_eDKuXLe5'}
+    elif part_type.strip() in ['6','7']:
+        DNA_type = {"value": 'sfso_eDKuXLe5'}
 
-    newPart["fields"] = {"Project": project, "DNA Type": DNAtype}
-    r = requests.post(request, json=newPart, auth=(key,""))
+    newPart["fields"] = {
+        "Project": project,
+        "DNA Type": DNA_type
+    }
 
-    if r.status_code >= 400:
-        raise BadRequestException(
-            "Server returned status {}. Response:\n{}".format(
-                r.status_code, json.dumps(r.json())
-            ),
-            r,
-        )
+    res = requests.post(request, json=newPart, auth=(key,""))
 
-    return r.json()
+    handle_response(res)
 
-def searchSeqBenchling(bases):
-    #request = f"{baseURL}{apiVersion}-beta/dna-sequences:search-bases"
-    request = baseURL+'v2-beta/dna-sequences:search-bases'
-    query = {"bases": bases,
+    return res.json()
+
+def searchSeqBenchling(squence_bases: str) -> List[dict]:
+    """
+    Searches Benchling tenant for DNA sequence entitites that contain the 
+    specified DNA sequence bases.
+
+    Args:
+        squence_bases (str): Bases of a DNA sequence to search for.
+
+    Returns:
+        List[dict]: A filtered list of DNA sequences that contain the provided bases.
+    """
+    request = f"{BASE_URL}{API_VERSION}-beta/dna-sequences:search-bases"
+    
+    #TODO - have registryId and schemaId as environment variable
+    query = {
+        "bases": squence_bases,
         "registryId": "src_oh4knSj0", #real
-        "schemaId": "ts_itQ9daT4"}
+        "schemaId": "ts_itQ9daT4"
+    }
 
-        #Test
-        #"registryId": "src_D2ebrtJZ",
-        #"schemaId": "ts_aPuxhTTQ"}
+    #Test
+    #"registryId": "src_D2ebrtJZ",
+    #"schemaId": "ts_aPuxhTTQ"}
 
-    r = requests.post(request, json=query, auth=(key,""))
+    res = requests.post(request, json=query, auth=(key,""))
 
-    if r.status_code >= 400:
-        raise BadRequestException(
-            "Server returned status {}. Response:\n{}".format(
-                r.status_code, json.dumps(r.json())
-            ),
-            r,
-        )
+    handle_response(res)
 
-    templates = r.json()
+    templates = res.json()
     return templates['dnaSequences']
 
-def annotatePartBenchling(seqIDs):
-    #request = f"{baseURL}{apiVersion}/dna-sequences:autofill-parts"
-    request = baseURL+'v2/dna-sequences:autofill-parts'
+# Does this return none?
+def annotatePartBenchling(sequence_ids: List[str]):
+    """
+    Sends a list of DNA sequence IDs to Benchling tenant, which will initiate 
+    an annotation of DNA sequence parts.
 
-    annotateList = {"dnaSequenceIds": seqIDs}
-    r = requests.post(request, json=annotateList, auth=(key,""))
+    Args:
+        sequence_ids (List[str]): list of sequence of IDs to annotate
+    """
+    request = f"{BASE_URL}{API_VERSION}/dna-sequences:autofill-parts"
 
-    if r.status_code >= 400:
-        raise BadRequestException(
-            "Server returned status {}. Response:\n{}".format(
-                r.status_code, json.dumps(r.json())
-            ),
-            r,
-        )
+    annotateList = { "dnaSequenceIds": sequence_ids }
+    res = requests.post(request, json=annotateList, auth=(key,""))
+
+    handle_response(res)
     return
