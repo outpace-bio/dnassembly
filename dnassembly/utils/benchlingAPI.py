@@ -47,10 +47,7 @@ KAN = os.environ.get('KAN')
 #newPart["schemaId"] = "" #ID code for DNA Part
 
 class BadRequestException(Exception):
-    #TODO - figure out rv type
-    def __init__(self, message: str, rv):
-        super(BadRequestException, self).__init__(message)
-        self.rv = rv
+    pass
 
 def handle_response(res: requests.Response) -> requests.Response:
     """
@@ -70,8 +67,7 @@ def handle_response(res: requests.Response) -> requests.Response:
         raise BadRequestException(
             "Server returned status {}. Response:\n{}".format(
                 res.status_code, json.dumps(res.json())
-            ),
-            res,
+            )
         )
 
     return res
