@@ -8,6 +8,7 @@ from typing import List, Tuple
 BASE_URL = os.environ.get('BENCHLING_URL')
 API_VERSION = os.environ.get('BENCHLING_API_VERSION')
 API_KEY = os.environ.get('BENCHLING_API_KEY')
+PROJECT_ID = os.environ.get('BENCHLING_PROJ_ID')
 SEQ_REGISTRY_ID = os.environ.get('SEQ_REGISTRY_ID')
 SEQ_SCHEMA_ID = os.environ.get('SEQ_SCHEMA_ID')
 SEQ_NAMING_STRAT = os.environ.get('SEQ_NAMING_STRAT')
@@ -34,9 +35,6 @@ DNA_PART_6_AND_7_ID = os.environ.get('DNA_PART_6_AND_7_ID') #sfso_eDKuXLe5
 
 CARB = os.environ.get('CARB')
 KAN = os.environ.get('KAN')
-
-
-project = {"value": [os.environ.get('BENCHLING_PROJ_ID')]} #MoClo Project
 
 #Test Registry
 #newSeq["folderId"] = "lib_1A6kl8LI" #Test, does this value change for each folder within a project?
@@ -205,7 +203,11 @@ def postPartBenchling(squence_bases: str, name: str, part_type: str):
         "bases": squence_bases,
         "name": name,
         "fields": {
-            "Project": project,
+            "Project": { 
+                "value": [
+                    PROJECT_ID
+                ]
+            },
             "DNA Type": {"value": DNA_type_id}
         }
     }   
