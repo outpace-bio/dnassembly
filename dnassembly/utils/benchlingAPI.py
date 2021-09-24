@@ -58,7 +58,8 @@ def handle_response(res: requests.Response) -> requests.Response:
         res (requests.Response): Response from a HTTP/HTTPS request
 
     Raises:
-        BadRequestException: [description]
+        BadRequestException: An exception containing HTTP response code
+        and recorded error in JSON format.
 
     Returns:
         requests.Response: Response from executed HTTP/HTTPS request
@@ -73,6 +74,14 @@ def handle_response(res: requests.Response) -> requests.Response:
     return res
 
 def get_dna_type_id(parts: str) -> str:
+    """Retrieves the DNA part ID of the specified part
+
+    Args:
+        parts (str): contains parts seperated by space characters
+
+    Returns:
+        str: DNA part ID
+    """
     part_type = parts.strip()
 
     if part_type in ['1']:
@@ -90,9 +99,19 @@ def get_dna_type_id(parts: str) -> str:
 
 #TODO - change assembly type to enum class and share class between files
 def get_sequence_folder_id(assembly_type: str) -> str:
+    """[summary]
+
+    Args:
+        assembly_type (str): [description]
+
+    Returns:
+        str: [description]
+    """
     if assembly_type == 'cassette': #Set location to the parent Stage 2 folder
+        #TODO - set as environmental variable
         return 'lib_lIpZ86uz'
     elif assembly_type == 'MC': #Set location to the parent Stage 3 folder
+        #TODO - set as environmental variable
         return 'lib_hWRdTDLG'
     else: #Set location to somewhere in Stage 1 folder
         part_type = assembly_type.strip()
@@ -115,6 +134,14 @@ def get_sequence_folder_id(assembly_type: str) -> str:
             return SEQ_PARENT_DIR_ID #Send to the parent Stage 1 folder
 
 def get_resistance(assembly_type: str) -> str:
+    """[summary]
+
+    Args:
+        assembly_type (str): [description]
+
+    Returns:
+        str: [description]
+    """
     #Test
     #antibioticId =  "sfso_0CQFeeLN" #test
     #resistance = {"value": antibioticId}
