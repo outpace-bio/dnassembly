@@ -9,6 +9,7 @@ Modified from code originally written by Will DeLoache.
 from Bio.Seq import Seq
 from Bio.Restriction import Restriction, FormattedSeq
 
+# Seems to duplicate the one in utilities
 GeneticCode = {'CTT': 'L', 'TAG': '*', 'AAG': 'K', 'AAA': 'K', 'ATC': 'I',
                'AAC': 'N', 'ATA': 'I', 'AGG': 'R', 'CCT': 'P', 'ACT': 'T',
                'AGC': 'S', 'ACA': 'T', 'AGA': 'R', 'CAT': 'H', 'AAT': 'N',
@@ -156,6 +157,7 @@ def removeRS(seq, enzymes):
 
 def _reversecomplement(sequence):
     """Return the reverse complement of the dna string."""
+    #TODO - should access dna dictionary from else where
     complement = {"A": "T", "T": "A", "C": "G", "G": "C", "N": "N"}
     reverse_complement_sequence = ""
     sequence_list = list(sequence)

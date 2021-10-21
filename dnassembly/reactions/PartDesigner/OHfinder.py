@@ -237,6 +237,7 @@ def findPossOH_byFragLength(GGfrags, maxFragLength, annealingLength):
 
 
 def main():
+	#TODO - are these unit tests?
 	frag1 = GGfrag("ATCG", "gggagacg", "ATCGACTAGCATCAGCTACGACTACGATCAGCATCAG", "ac","")
 	frag2 = GGfrag("", "acttacga", "CGGATCAGCTAGGCTACTTAGCTAGATCGATCGACTG", "atggtcgatg", "GGAT")
 	GGfrags = [frag1, frag2]

@@ -17,6 +17,7 @@ def convert_biopython_to_dnassembly(parsed_genbank, output_format):
     :param output_format: OutputFormat object for your desired output format
     :return:
     """
+    #TODO - maybe convert this to DNA seq?
     dna_sequence = str(parsed_genbank.seq)
 
     # Pull any features out of genbank and stick them into Feature class instances

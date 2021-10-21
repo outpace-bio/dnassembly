@@ -15,6 +15,7 @@ from Bio.SeqRecord import SeqRecord
 import math
 from Bio.Restriction import Restriction
 
+#TODO - what does this do?
 BASE_PATH = reduce (lambda l,r: l + os.path.sep + r, os.path.dirname( os.path.realpath( __file__ ) ).split( os.path.sep )) + "/"
 
 class GGfrag():
