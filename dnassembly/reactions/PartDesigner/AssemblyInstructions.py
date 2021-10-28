@@ -5,6 +5,7 @@ AssemIns.py
 
 Created by Will DeLoache on 2012-09-12.
 """
+from itertools import product
 import math
 from Bio.Seq import Seq
 import pdb
@@ -22,11 +23,16 @@ class AssemblyInstructions():
 		self.digest = ""
 		relevant_seq = GGfrag.fiveprimeOH + GGfrag.fiveprimeExt + GGfrag.seq + GGfrag.threeprimeExt + GGfrag.threeprimeOH
 
-		if self.method not in ["PCR", "gBlocks", "PCA"]:
+
+		#print(f"self.method == {self.method} and seq size = {len(relevant_seq)}")
+
+		if self.method not in ["PCR", "gBlocks", "eBlocks", "PCA"]:
 			self.product = relevant_seq
 		elif self.method == "eBlocks" and len(relevant_seq) < 300:
 			padding = int(math.ceil((300 - len(relevant_seq))/2))
-			self.product = self.pad_4772_us[-padding:] + relevant_seq + pad_4772_ds[:padding]
+			#print(f"self.pad_4772_us[-{padding}:] + relevant_seq + self.pad_4772_ds[:{padding}]")
+			self.product = self.pad_4772_us[-padding:] + relevant_seq + self.pad_4772_ds[:padding]
+			#print(f"product length: {len(self.product)}")
 		else:
 			self.product = tails[0] + GGfrag.fiveprimeOH + GGfrag.fiveprimeExt + GGfrag.seq + GGfrag.threeprimeExt + GGfrag.threeprimeOH + tails[1]
 			self.digest = GGfrag.fiveprimeOH + GGfrag.fiveprimeExt + GGfrag.seq + GGfrag.threeprimeExt + GGfrag.threeprimeOH

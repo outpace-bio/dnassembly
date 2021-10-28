@@ -1,5 +1,6 @@
 networkx>=2.3
 biopython>=1.78
-
+more-itertools
+requests
 #development
 pytest

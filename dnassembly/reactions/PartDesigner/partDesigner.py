@@ -24,6 +24,7 @@ from ...dna.part import Part, DNA
 from ...utils.benchlingAPI import *
 from ...design.partdesigner import *
 from ..cloning import StickyEndAssembly
+from ...dna import Plasmid
 
 #from CodonOptimize.codonOptimize import codonOptimize
 #from makeBLASTdb import makeBLASTdb
@@ -35,89 +36,95 @@ from ..cloning import StickyEndAssembly
 #from siteinfo import *
 
 # Define static variables
-gBlockMaxSize = 3000  # make an attribute of ggpart class (be able to update to 900)
-eBlockMaxSize = 900
-PCAMaxSize = 800
-gBlockMinSize = 125  # make an attribute of ggpart class
+G_BLOCK_MAX_SIZE = 3000  # make an attribute of ggpart class (be able to update to 900)
+E_BLOCK_MAX_SIZE = 900
+PCA_MAX_SIZE = 800
+G_BLOCK_MIN_SIZE = 125  # make an attribute of ggpart class
 oligoAssemblySize = 125
 annealingLength = 20
 oligoTM = 48
 
 #Overhangs of the entry vector
-entry_ohs = ('TTCT', 'AACG')
+ENTRY_OHS = ('TTCT', 'AACG')
 
 #Sequence between entry vector OH and part ohs
-entry_extensions = ('GAAGACTC', 'GAGTCTTC') #Changed the right extension to include a BbsI cut site. Not sure why this wasn't included originally?
+ENTRY_EXTENSIONS = ('GAAGACTC', 'GAGTCTTC') #Changed the right extension to include a BbsI cut site. Not sure why this wasn't included originally?
 
 #part assembly overhangs
-partOH_5 = {'1': 'TCAA',
-'2a': 'ACGA',
-'2b': 'AACG',
-'3a': 'CACC',
-'3b': 'TTCT',
-'3c': 'AGCA',
-'3d': 'AGGC',
-'3e': 'TCCA',
-'4a': 'ATCC',
-'4b': 'GTAA',
-'5': 'GCTA',
-'6': 'ACTC',
-'7': 'ATTG'
+partOH_5 = {
+	'1': 'TCAA',
+	'2a': 'ACGA',
+	'2b': 'AACG',
+	'3a': 'CACC',
+	'3b': 'TTCT',
+	'3c': 'AGCA',
+	'3d': 'AGGC',
+	'3e': 'TCCA',
+	'4a': 'ATCC',
+	'4b': 'GTAA',
+	'5': 'GCTA',
+	'6': 'ACTC',
+	'7': 'ATTG'
 }
 
-partOH_3 = {'1': 'ACGA',
-'2a': 'AACG',
-'2b': 'CACC',
-'3a': 'TTCT',
-'3b': 'AGCA',
-'3c': 'AGGC',
-'3d': 'TCCA',
-'3e': 'ATCC',
-'4a': 'GTAA',
-'4b': 'GCTA',
-'5': 'ACTC',
-'6': 'ATTG',
-'7': 'TCAA'
+partOH_3 = {
+	'1': 'ACGA',
+	'2a': 'AACG',
+	'2b': 'CACC',
+	'3a': 'TTCT',
+	'3b': 'AGCA',
+	'3c': 'AGGC',
+	'3d': 'TCCA',
+	'3e': 'ATCC',
+	'4a': 'GTAA',
+	'4b': 'GCTA',
+	'5': 'ACTC',
+	'6': 'ATTG',
+	'7': 'TCAA'
 }
 
 #Sequence between part and part overhangs
-partextension_5 = {'1': '',
-'2a': '',
-'2b': '',
-'3a': '',
-'3b': '',
-'3c': 'GT',
-'3d': '',
-'3e': 'GT',
-'4a': '',
-'4b': 'GGTACC', #Add KpnI
-'5': '',
-'6': '',
-'7': '',
-'Custom': '',
+PARTEXTENSION_5 = {
+	'1': '',
+	'2a': '',
+	'2b': '',
+	'3a': '',
+	'3b': '',
+	'3c': 'GT',
+	'3d': '',
+	'3e': 'GT',
+	'4a': '',
+	'4b': 'GGTACC', #Add KpnI
+	'5': '',
+	'6': '',
+	'7': '',
+	'Custom': '',
 }
 
-partextension_3 = {'1': '',
-'2a': '',
-'2b': 'ACTCTTCTGGTCCCCACAGACTCAGAGAGAACCCGCTAGC', # This is where the standardized 5' UTR and 3' UTR can go
-'3a': 'GG',
-'3b': '',
-'3c': 'TC',
-'3d': '',
-'3e': 'GG',
-'4a': 'TA',
-'4b': '',
-'5': '',
-'6': '',
-'7': '',
-'Custom': '',
+PARTEXTENSION_3 = {
+	'1': '',
+	'2a': '',
+	'2b': 'ACTCTTCTGGTCCCCACAGACTCAGAGAGAACCCGCTAGC', # This is where the standardized 5' UTR and 3' UTR can go
+	'3a': 'GG',
+	'3b': '',
+	'3c': 'TC',
+	'3d': '',
+	'3e': 'GG',
+	'4a': 'TA',
+	'4b': '',
+	'5': '',
+	'6': '',
+	'7': '',
+	'Custom': '',
 }
 
 multigene_ohs = ["CTGA", "CCAA", "GATG", "GTTC", "GGTA", "AAGT", "AGCA"] # - NEED TO FIX, is this even used?
 
 # Sequence to add to ends of a PCR in order to digest with BsmBI for entry into Stage 1 vector
-tails = {"BsmBI":("GCATCGTCTCA", "TGAGACGGCAT"),
-		 "BbsI":("GCATGAAGACTC", "AGGTCTTCGCAT")}
+tails = {
+	"BsmBI":("GCATCGTCTCA", "TGAGACGGCAT"),
+	"BbsI":("GCATGAAGACTC", "AGGTCTTCGCAT")
+}
 
 # part entry vector is required for GGpart instantiation
 # entryVectors = {"OPL4772":"gcatcaaatgaaactgcaatttattcatatcaggattatcaataccatatttttgaaaaagccgtttctgtaatgaaggagaaaactcaccgaggcagttccataggatggcaagatcctggtatcggtctgcgattccgactcgtccaacatcaatacaacctattaatttcccctcgtcaaaaataaggttatcaagtgagaaatcaccatgagtgacgactgaatccggtgagaatggcaaaagtttatgcatttctttccagacttgttcaacaggccagccattacgctcgtcatcaaaatcactcgcatcaaccaaaccgttattcattcgtgattgcgcctgagccagacgaaatacgcgatcgctgttaaaaggacaattacaaacaggaatcgaatgcaaccggcgcaggaacactgccagcgcatcaacaatattttcacctgaatcaggatattcttctaatacctggaatgctgtttttccggggatcgcagtggtgagtaaccatgcatcatcaggagtacggataaaatgcttgatggtcggaagaggcataaattccgtcagccagtttagtctgaccatctcatctgtaacatcattggcaacgctacctttgccatgtttcagaaacaactctggcgcatcgggcttcccatacaagcgatagattgtcgcacctgattgcccgacattatcgcgagcccatttatacccatataaatcagcatccatgttggaatttaatcgcggcctcgacgtttcccgttgaatatggctcatactcttcctttttcaatattattgaagcatttatcagggttattgtctcatgagcggatacatatttgaatgtatttagaaaaataaacaaataggggttccgcgcacatttccccgaaaagtgccagatacctgaaacaaaacccatcgtacggccaaggaagtctccaataactgtgatccaccacaagcgccagggttttcccagtcacgacgttgtaaaacgacggccagtcatgcataatccgcacgcatctggaataaggaagtgccattccgcctgacctttctagagacgttctagagcacagctaacaccacgtcgtccctatctgctgccctaggtctatgagtggttgctggataactttacgggcatgcataaggctcgtataatatattcagggagaccacaacggtttccctctacaaataattttgtttaacttttactagatcacacaggaaagtactagatgcgtaaaggagaagaacttttcactggagttgtcccaattcttgttgaattagatggtgatgttaatgggcacaaattttctgtcagtggagagggtgaaggtgatgcaacatacggaaaacttacccttaaatttatttgcactactggaaaactacctgttccatggccaacacttgtcactactttcggttatggtgttcaatgctttgcgagatacccagatcatatgaaacagcatgactttttcaagagtgccatgcccgaaggttatgtacaggaaagaactatatttttcaaagatgacgggaactacaagacacgtgctgaagtcaagtttgaaggtgatacccttgttaatagaatcgagttaaaaggtattgattttaaagaagatggaaacattcttggacacaaattggaatacaactataactcacacaatgtatacatcatggcagacaaacaaaagaatggaatcaaagttaacttcaaaattagacacaacattgaagatggaagcgttcaactagcagaccattatcaacaaaatactccaattggcgatggccctgtccttttaccagacaaccattacctgtccacacaatctgccctttcgaaagatcccaacgaaaagagagaccacatggtccttcttgagtttgtaacagctgctgggattacacatggcatggatgaactatacaaatagtagtactagagccaggcatcaaataaaacgaaaggctcagtcgaaagactgggcctttcgttttatctgttgtttgtcggtgaacgctctctactagagtcacactggctcaccttcgggtgggcctttctgcgtttatacgtctcgaacgaggctaggtggaggctcagtgatgataagtctgcgatggtggatgcatgtgtcatggtcatagctgtttcctgtgtgaaattgttatccgctcagagggcacaatcctattccgcgctatccgacaatctccaagacattaggtggagttcagttcggcgtatggcatatgtcgctggaaagaacatgtgagcaaaaggccagcaaaaggccaggaaccgtaaaaaggccgcgttgctggcgtttttccataggctccgcccccctgacgagcatcacaaaaatcgacgctcaagtcagaggtggcgaaacccgacaggactataaagataccaggcgtttccccctggaagctccctcgtgcgctctcctgttccgaccctgccgcttaccggatacctgtccgcctttctcccttcgggaagcgtggcgctttctcatagctcacgctgtaggtatctcagttcggtgtaggtcgttcgctccaagctgggctgtgtgcacgaaccccccgttcagcccgaccgctgcgccttatccggtaactatcgtcttgagtccaacccggtaagacacgacttatcgccactggcagcagccactggtaacaggattagcagagcgaggtatgtaggcggtgctacagagttcttgaagtggtggcctaactacggctacactagaagaacagtatttggtatctgcgctctgctgaagccagttaccttcggaaaaagagttggtagctcttgatccggcaaacaaaccaccgctggtagcggtggtttttttgtttgcaagcagcagattacgcgcagaaaaaaaggatctcaagaagatcctttgatcttttctacggggtctgacgctctattcaacaaagccgccgtcccgtcaagtcagcgtaaatgggtagggggcttcaaatcgtcctcgtgataccaattcggagcctgcttttttgtacaaacttgttgataatggcaattcaaggatcttcacctagatccttttaaattaaaaatgaagttttaaatcaatctaaagtatatatgagtaaacttggtctgacagttagaaaaactcatcga"}
@@ -158,21 +165,25 @@ class GGpart():
 		self.errors = []
 
 		## These will all be initialized later unless the an error is thrown in which case they will be left blank
-		self.vectorName = ""
+		self.vectorName = "OPL4772"
 		self.vectorSeq = ""
 		self.vectorDigest = ""
 		self.maxOverhangConstraints = 1
 		self.plasmidSeq = ""
-		self.enzyme = ""
+		self.enzyme = "" #TODO - (JS) seems like this should just be self.enzyme = "BsmBI"
 		self.subclone = ""
 		self.partSeq = ""
 		self.GGfrags = []
 		self.fragments = []
 		self.removeRS_tuples = None
 
+		# TODO - (JS) adds warning if left or right part type is 1 or 5
 		if self.checkInput_beforeOptimization():
 			#Generate partSeq by removing RS and codon optimizing
+
+			# TODO - (JS) assigning self.partSeq here is unnecessary
 			self.partSeq = ""
+
 			self.removeInternalRS()
 			self.partSeq = self.partSeq.lower() #change all bases to lowercase
 
@@ -194,6 +205,52 @@ class GGpart():
 
 	################ Other functions #################
 
+	def _split_seq_evenly(self, sequence: str, min_chunk_size: int, max_chunk_size: int) -> List[str]:
+		chunks = []
+		sequence_length = len(sequence)
+		num_chunks = int(sequence_length / min_chunk_size)
+		remaining_seq_length = sequence_length % min_chunk_size
+		optimal_chunk_size = min_chunk_size + math.ceil(remaining_seq_length / float(num_chunks))
+		
+		print("Starting _split_seq_evenly()...")
+		print(f"sequence_length: {sequence_length}, num_chunks: {num_chunks}, remaining_seq_length: {remaining_seq_length}, optimal_chunk_size: {optimal_chunk_size}")
+
+		idx = 0
+		while idx < sequence_length:
+			if idx + optimal_chunk_size < sequence_length:
+				print(f"sequence[{idx}:{idx+optimal_chunk_size}]")
+				chunks.append(sequence[idx:idx+optimal_chunk_size])
+			else:
+				print(f"sequence[{idx}:]")
+				chunks.append(sequence[idx:])
+			idx += optimal_chunk_size
+		return chunks
+
+	def divideBySizeEvenly(self, input_part: Part, min_chunk_size: int = 300-24, max_chunk_size: int = 900-24):
+		"""Return a list of Parts divided by size"""
+		if max_chunk_size >= len(input_part.seq):
+			# junk sequences sandwhitching will be handled in later part
+			return [input_part]
+		else:
+			subseqs = self._split_seq_evenly(input_part.sequence, min_chunk_size, max_chunk_size)
+
+			newFrags = []
+			for i in range(len(subseqs)):
+				newFrag = ""  # ?????
+				if i == 0:
+					lenFiveSeq = len(input_part.fiveprimeOH) + len(input_part.fiveprimeExt)
+					newFrag = Part.GGfrag(fiveprimeOH=input_part.fiveprimeOH, fiveprimeExt=input_part.fiveprimeExt, seq=subseqs[i][lenFiveSeq:], forced_method=input_part.forced_method)
+				elif i == len(subseqs) - 1:
+					lenThreeSeq = len(input_part.threeprimeExt) + len(input_part.threeprimeOH)
+					if lenThreeSeq == 0:
+						newFrag = Part.GGfrag(seq=subseqs[i], forced_method=input_part.forced_method)
+					else:
+						newFrag = Part.GGfrag(seq=subseqs[i][:-lenThreeSeq], threeprimeExt=input_part.threeprimeExt, threeprimeOH=input_part.threeprimeOH, forced_method=input_part.forced_method)
+				else:
+					newFrag = Part.GGfrag(seq=subseqs[i], forced_method=input_part.forced_method)
+				newFrags.append(newFrag)
+			return newFrags
+
 	# REDUNDANT METHOD! - not used anywhere and can be removed
     # Check to make sure input is in the form of DNA letters
 	def _verify_alphabet(sequence):  # todo: what.
@@ -209,6 +266,8 @@ class GGpart():
 		"""Check to ensure the input sequence is DNA and does not break part 1 and 5 construction
 		Specifically checks that BsmBI sites are not removed from connector parts.
 		"""
+		# TODO - (JS) This currently only provides warnings and doesn't actually block GGPart
+
 		#seq = Seq(self.inputSeq.upper())
 		#if not (_verify_alphabet(seq)):
 		#    self.errors.append("The DNA sequence you entered in invalid.")
@@ -229,6 +288,7 @@ class GGpart():
 		f_seq = FormattedSeq(Seq(self.partSeq), True)
 
 		#Check to make sure BbsI/BsmBI sites aren't present
+		#TODO - (JS) why does this if statement not have a body
 		if BbsI.search(f_seq) and BsmBI.search(f_seq):
 			#comment the line below to let through parts with BbsI and BsmBI
 			#be careful, though, these assemblies may be problematic
@@ -272,65 +332,61 @@ class GGpart():
 		else:
 			return True
 
-	def _initGGfrag(self, fiveprime, threeprime):
+	def _initGGfrag(self, fiveprime, threeprime) -> List[Part]:
 		#fiveprime and threeprime are variables that will get passed in the case of custom part design
 		#only set to true if you have to gel purify the fragments
 		self.subclone = False
 
-		frag_seq = self.partSeq
 		#These are the strings that will get appended onto the ends of the fratment
-		fiveprimeOH = ""
-		threeprimeOH = ""
-		fiveprimeExt = ""
-		threeprimeExt = ""
+		fiveprimeOH = ENTRY_OHS[0].upper()
+		threeprimeOH = ENTRY_OHS[1].upper()
+		fiveprimeExt = ENTRY_EXTENSIONS[0].upper()
+		threeprimeExt = PARTEXTENSION_3[self.rightPartType]
+
 
 		#Custom Part Design
 		if self.leftPartType == "Custom" or self.rightPartType == "Custom":
 			self.enzyme = "BsmBI"
 
-			fiveprimeOH = entry_ohs[0].upper()
-			threeprimeOH = entry_ohs[1].upper()
-			fiveprimeExt = entry_extensions[0].upper() + fiveprime[:4].upper() + partextension_5[self.leftPartType]
-			threeprimeExt = partextension_3[self.rightPartType] + threeprime[-4:].upper() + entry_extensions[1].upper()
+			fiveprimeExt += fiveprime[:4].upper() + PARTEXTENSION_5[self.leftPartType]
+			threeprimeExt += threeprime[-4:].upper()
 
 		#Add a section here to catch 4a-4b parts and add a stop codon
 		elif self.leftPartType == "4a" and self.rightPartType == "4b":
 			self.enzyme = "BsmBI"
-			fiveprimeOH = entry_ohs[0].upper()
-			threeprimeOH = entry_ohs[1].upper()
-			fiveprimeExt = entry_extensions[0].upper() + partOH_5[self.leftPartType] + 'TAA' #Insert additional cut site to enable subcloning here
-			threeprimeExt = partextension_3[self.rightPartType] + partOH_3[self.rightPartType] + entry_extensions[1].upper()
+			fiveprimeExt += partOH_5[self.leftPartType] + 'TAA' #Insert additional cut site to enable subcloning here
+			threeprimeExt += partOH_3[self.rightPartType]
 
 		else:
 			self.enzyme = "BsmBI"
-			fiveprimeOH = entry_ohs[0].upper()
-			threeprimeOH = entry_ohs[1].upper()
-			fiveprimeExt = entry_extensions[0].upper() + partOH_5[self.leftPartType] + partextension_5[self.leftPartType]
-			threeprimeExt = partextension_3[self.rightPartType] + partOH_3[self.rightPartType] + entry_extensions[1].upper()
+			fiveprimeExt += partOH_5[self.leftPartType] + PARTEXTENSION_5[self.leftPartType]
+			threeprimeExt += partOH_3[self.rightPartType]
 
-		#Set vector
-		# todo: get rid of this dependency
-		self.vectorName = "OPL4772" #Remember to hardcode in this vector
 
-		newFrag = Part.GGfrag(fiveprimeOH, fiveprimeExt, frag_seq, threeprimeExt, threeprimeOH)
+		threeprimeExt += ENTRY_EXTENSIONS[1].upper()
+
+		newFrag = Part.GGfrag(fiveprimeOH, fiveprimeExt, self.partSeq, threeprimeExt, threeprimeOH)
 		self.GGfrags = [newFrag]
 
 	def pickGGfrags(self):
 		allowableSize = 0
 		forced_method = ""
 		if self.method == "gBlocks":
-			allowableSize = gBlockMaxSize - 24
+			allowableSize = G_BLOCK_MAX_SIZE - 24
 		elif self.method == "eBlocks":
-			allowableSize = eBlockMaxSize - 24
+			allowableSize = E_BLOCK_MAX_SIZE - 24
 		elif self.method == "Oligo Assembly":
-			allowableSize = gBlockMinSize - 3
+			allowableSize = G_BLOCK_MIN_SIZE - 3
 		elif self.method == "PCA":
-			allowableSize = PCAMaxSize - 24
+			allowableSize = PCA_MAX_SIZE - 24
 
 		# Divide the initialized GGfrag into chunks based on assembly method
-		if self.method in ["eBlocks", "gBlocks", "Oligo Assembly", "PCA"]:
+		if self.method in ["gBlocks", "Oligo Assembly", "PCA"]:
 			self.GGfrags[0].forced_method = self.method
 			self.GGfrags = divideBySize(self.GGfrags[0], allowableSize)
+		elif self.method in ["eBlocks"]:
+			self.GGfrags[0].forced_method = self.method
+			self.GGfrags = self.divideBySizeEvenly(self.GGfrags[0])
 		else:
 			#pdb.set_trace()
 			self.GGfrags = divideByIndexTuples(self.GGfrags[0], self.removeRS_tuples) #Uppercase should come from the removeRS
@@ -338,9 +394,20 @@ class GGpart():
 			### Split sequence without template into gBlock sized chunks###
 			if self.method == "None":
 				tempFrags = []
+				
 				for index, each in enumerate(self.GGfrags):
 					if len(each.seq) > 8:
+
+						# potential speed up idea
+						# 1. add all distinct sequences above 8 bp to list
+						# 2. parallize sequence search
+						# 3. append the found sequence entities to a local data structure
+						# 4. parallize search of registered entities to determine if physical batches are associated with it
+
+						# check if sequence exists in benchling
 						results = searchSeqBenchling(each.seq)
+
+						# if there matching sequence(s) in benchling then add as possible template
 						if results:
 							for i in range(len(results)):
 								if results[i]['entityRegistryId']:
@@ -356,18 +423,20 @@ class GGpart():
 
 								seq = results[i]['bases']
 								#linear = not(results[i]['isCircular'])
+
+								# add sequence as possible template if found 
 								self.possibleTemplates[alias] = seq
 
 					if findTemplate(each.seq, self.possibleTemplates):
 						each.forced_method = "PCR"
 						tempFrags.append(each)
 					else:
-						if len(each) < gBlockMinSize:
+						if len(each) < G_BLOCK_MIN_SIZE:
 							each.forced_method = "Oligo Assembly"
 							tempFrags += [each]
 						#If length is just over gBlock length, make the assembly include one oligo assembly to save on a gBlock
-						elif 0 < len(each) % (gBlockMaxSize - 24) < gBlockMinSize - 4 * len(each)/(gBlockMaxSize-24):
-							oligoAssemSize = max(20, len(each) % (gBlockMaxSize - 24) + 4 * len(each)/(gBlockMaxSize-24))
+						elif 0 < len(each) % (G_BLOCK_MAX_SIZE - 24) < G_BLOCK_MIN_SIZE - 4 * len(each)/(G_BLOCK_MAX_SIZE-24):
+							oligoAssemSize = max(20, len(each) % (G_BLOCK_MAX_SIZE - 24) + 4 * len(each)/(G_BLOCK_MAX_SIZE-24))
 							if index == 0:
 								oligoFrag = Part.GGfrag(each.sequence[:4], "", each.sequence[4:oligoAssemSize], "", "", forced_method="Oligo Assembly")
 							else:
@@ -377,10 +446,10 @@ class GGpart():
 							else:
 								gBlockFrag = Part.GGfrag("", "", each.sequence[oligoAssemSize:], "", "", forced_method="gBlocks")
 							tempFrags += [oligoFrag]
-							tempFrags += divideBySize(gBlockFrag, gBlockMaxSize - 24)
+							tempFrags += divideBySize(gBlockFrag, G_BLOCK_MAX_SIZE - 24)
 						else:
 							each.forced_method = "gBlocks"
-							tempFrags += divideBySize(each, gBlockMaxSize - 24)
+							tempFrags += divideBySize(each, G_BLOCK_MAX_SIZE - 24)
 
 				self.GGfrags = tempFrags
 
@@ -465,18 +534,18 @@ class GGpart():
 	def pickGGfragOHs(self):
 		allowableSize = 0
 		if self.method == "gBlocks":
-			allowableSize = gBlockMaxSize - 22
+			allowableSize = G_BLOCK_MAX_SIZE - 22
 		elif self.method == "eBlocks":
-			allowableSize = eBlockMaxSize - 22
+			allowableSize = E_BLOCK_MAX_SIZE - 22
 		elif self.method == "Oligo Assembly":
-			allowableSize = gBlockMinSize
+			allowableSize = G_BLOCK_MIN_SIZE
 
 		#Find possible overhangs at each junction
 		possOHs = []
 		if self.method in ["eBlocks", "gBlocks", "Oligo Assembly"]:
 			possOHs = findPossOH_byFragLength(self.GGfrags, allowableSize, annealingLength)
 		else:
-			possOHs = findPossOH_byPrimerLength(self.GGfrags, self.maxPrimerLength - 11, annealingLength, gBlockMaxSize, self.enzyme)
+			possOHs = findPossOH_byPrimerLength(self.GGfrags, self.maxPrimerLength - 11, annealingLength, G_BLOCK_MAX_SIZE, self.enzyme)
 		if possOHs == False:
 			self.errors.append("No valid overhangs could be found. Consider increasing the maximum primer length or specifying a different assembly strategy.")
 			return False
@@ -538,7 +607,7 @@ class GGpart():
 					fragsMerged = True
 					break
 
-	def performPartAssembly(self, part_entry_vector):
+	def performPartAssembly(self, part_entry_vector: Plasmid) -> Plasmid:
 		"""
 		Use StickyEndAssembly to perform assembly
 		Assumes BsmBI for part assembly
@@ -551,7 +620,7 @@ class GGpart():
 		assembled_part = part_assembly.perform_assembly()
 		return assembled_part
 
-	def getAssemblyInstructions(self):
+	def getAssemblyInstructions(self) -> List[AssemblyInstructions]:
 		assemIns = []
 		primers, methods = self.getPrimersAndMethods()
 		# pdb.set_trace()
@@ -582,10 +651,10 @@ class GGpart():
 						self.errors.append(message)
 			else:
 				if not self.possibleTemplates: #Change - if no template, then
-					if len(each) <= gBlockMinSize:
+					if len(each) <= G_BLOCK_MIN_SIZE:
 						primers.append(getOligoAssemPrimers(each, self.maxPrimerLength))
 						methods.append("Oligo Assembly")
-					#elif each.getLength() + len(tails[self.enzyme][0]) + len(tails[self.enzyme][1]) >  gBlockMaxSize:
+					#elif each.getLength() + len(tails[self.enzyme][0]) + len(tails[self.enzyme][1]) >  G_BLOCK_MAX_SIZE:
 						#primers.append(each.getPCAprimers(self.maxPrimerLength))
 						#methods.append("PCA")
 					else:

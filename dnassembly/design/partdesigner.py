@@ -26,10 +26,16 @@ def divideBySize(input_part, size):
     """Return a list of Parts divided by size"""
     length = len(input_part)
     numFrags = 0
+    
+    # TODO - (JS) this is an easier solution to if else block immediately below
+    """
+    numFrags = math.ceil(float(length)/size)
+    """
     if length % size == 0:
         numFrags = int(length/size)
     else:
         numFrags = int(length/size) + 1
+
     if numFrags <= 1:
         return [input_part]
     else:
@@ -52,7 +58,7 @@ def divideBySize(input_part, size):
         return newFrags
 
 
-def divideByIndexTuples(input_part, index_tuples):
+def divideByIndexTuples(input_part: Part, index_tuples) -> List[Part]:
     """Split sequence by a list of index tuple, where each tuple represents a slice where a sequence modification has
     been made by removeRS()
     """
@@ -60,6 +66,8 @@ def divideByIndexTuples(input_part, index_tuples):
     subseqs = _merge_single_bases(subseqs)
     if len(subseqs) <= 1:
         input_part.seq = input_part.seq.lower()
+
+        #TODO - (JS) does this have different return type than the blow else block?
         return [input_part]
     else:
         newFrags = []
@@ -158,7 +166,7 @@ def _merge_single_bases(subseqs):
     return new
 
 #Splits a string into an array of equally divided substrings
-def _split_seq_byLength(seq, p):
+def _split_seq_byLength(seq: str, p: int) -> List[str]:
     newseq = []
     n = len(seq) // p    # min items per subsequence
     r = len(seq) % p    # remaindered items

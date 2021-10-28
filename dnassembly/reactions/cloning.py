@@ -451,8 +451,8 @@ class StickyEndAssembly(CloningReaction):
                 continue
             complete_assemblies.append(assembly)
 
-        from pprint import pprint
-        pprint(complete_assemblies)
+        #from pprint import pprint
+        #pprint(complete_assemblies)
 
         # Check for circular permutations
         nr_assemblies = list()
@@ -538,8 +538,8 @@ class HomologyAssembly(CloningReaction):
 
         for part_1, part_2 in combinations(self.input_dna_list, 2):
 
-            print(part_1)
-            print(part_2)
+            #print(part_1)
+            #print(part_2)
 
             # Get possible part_1 3' overlap with part_2 5'
             part_1_right = part_1.sequence[-homology_overlap:]
@@ -547,7 +547,7 @@ class HomologyAssembly(CloningReaction):
             for match in re_pattern.finditer(part_2.sequence):
 
                 overlap_length = match.start() + len(part_1_right)
-                print(part_2.sequence[:overlap_length], part_1.sequence[-overlap_length:])
+                #print(part_2.sequence[:overlap_length], part_1.sequence[-overlap_length:])
                 if part_2.sequence[:overlap_length] == part_1.sequence[-overlap_length:]:
                     print('Overlap found, adding nodes and edges to graph.')
                     overlap_seq = part_1.sequence[-overlap_length:]
@@ -561,7 +561,7 @@ class HomologyAssembly(CloningReaction):
             re_pattern = re.compile(f'(?={part_1_left})')
             for match in re_pattern.finditer(part_2.sequence):
                 overlap_length = len(part_2.sequence) - match.start()
-                print(part_2.sequence[-overlap_length:], part_1.sequence[:overlap_length])
+                #print(part_2.sequence[-overlap_length:], part_1.sequence[:overlap_length])
                 if part_2.sequence[-overlap_length:] == part_1.sequence[:overlap_length]:
                     print('Overlap found, adding nodes and edges to graph.')
                     overlap_seq = part_1.sequence[-overlap_length:]
@@ -598,7 +598,7 @@ class HomologyAssembly(CloningReaction):
         # Actually do assemblies
         intermediate_assemblies = list()
         for assembly in all_possible_assemblies:
-            print(assembly)
+            #print(assembly)
             assembly_dict = dict()
             assembly_dict['sequence'] = ''
             assembly_dict['features'] = list()
