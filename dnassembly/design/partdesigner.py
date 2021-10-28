@@ -8,6 +8,7 @@ from Bio.SeqRecord import SeqRecord
 import math
 from Bio.Restriction import Restriction
 from itertools import chain
+from typing import List
 
 from ..dna.part import *
 from ..utils import pairwise
@@ -40,6 +41,78 @@ def divideBySize(input_part, size):
         return [input_part]
     else:
         subseqs = _split_seq_byLength(input_part.sequence, numFrags)
+        newFrags = []
+        for i in range(len(subseqs)):
+            newFrag = ""  # ?????
+            if i == 0:
+                lenFiveSeq = len(input_part.fiveprimeOH) + len(input_part.fiveprimeExt)
+                newFrag = Part.GGfrag(fiveprimeOH=input_part.fiveprimeOH, fiveprimeExt=input_part.fiveprimeExt, seq=subseqs[i][lenFiveSeq:], forced_method=input_part.forced_method)
+            elif i == len(subseqs) - 1:
+                lenThreeSeq = len(input_part.threeprimeExt) + len(input_part.threeprimeOH)
+                if lenThreeSeq == 0:
+                    newFrag = Part.GGfrag(seq=subseqs[i], forced_method=input_part.forced_method)
+                else:
+                    newFrag = Part.GGfrag(seq=subseqs[i][:-lenThreeSeq], threeprimeExt=input_part.threeprimeExt, threeprimeOH=input_part.threeprimeOH, forced_method=input_part.forced_method)
+            else:
+                newFrag = Part.GGfrag(seq=subseqs[i], forced_method=input_part.forced_method)
+            newFrags.append(newFrag)
+        return newFrags
+
+def _split_seq_evenly(sequence: str, min_chunk_size: int, max_chunk_size: int, use_min: bool ) -> List[str]:
+    """[summary]
+
+    Args:
+        sequence (str): original sequence to split up into even chunks
+        min_chunk_size (int): minumum size of chunks
+        max_chunk_size (int): maximum size of chunks
+        use_min (bool, optional):  True if part should be split into smaller chunks, otherwise larger chunks.
+
+    Returns:
+        List[str]: sequences split from original sequence
+    """
+    chunks = []
+    sequence_length = len(sequence)
+    print("Starting _split_seq_evenly()...")
+    if use_min:
+        num_chunks = int(sequence_length / min_chunk_size)
+        remaining_seq_length = sequence_length % min_chunk_size
+        optimal_chunk_size = min_chunk_size + math.ceil(remaining_seq_length / float(num_chunks))
+        print(f"sequence_length: {sequence_length}, num_chunks: {num_chunks}, remaining_seq_length: {remaining_seq_length}, optimal_chunk_size: {optimal_chunk_size}")
+    else:
+        num_chunks = int(sequence_length / max_chunk_size) + 1
+        optimal_chunk_size = math.ceil(sequence_length / float(num_chunks))
+        print(f"sequence_length: {sequence_length}, num_chunks: {num_chunks}, optimal_chunk_size: {optimal_chunk_size}")
+
+    idx = 0
+    while idx < sequence_length:
+        if idx + optimal_chunk_size < sequence_length:
+            print(f"sequence[{idx}:{idx+optimal_chunk_size}]")
+            chunks.append(sequence[idx:idx+optimal_chunk_size])
+        else:
+            print(f"sequence[{idx}:]")
+            chunks.append(sequence[idx:])
+        idx += optimal_chunk_size
+    return chunks
+
+def divideBySizeEvenly(input_part: Part, min_chunk_size: int = 300-24, max_chunk_size: int = 900-24, use_min: bool = False) -> List[Part]:
+    """Return a list of parts divided by size evenly
+
+    Args:
+        input_part (Part): original part to split up into even chunks
+        min_chunk_size (int, optional): minumum size of chunks. Defaults to 300-24.
+        max_chunk_size (int, optional): maximum size of chunks. Defaults to 900-24.
+        use_min (bool, optional): True if part should be split into smaller chunks, otherwise larger chunks. Defaults to False.
+
+    Returns:
+        List[Part]: parts with sequences split up from original part
+    """
+    
+    if max_chunk_size >= len(input_part.seq):
+        # junk sequences sandwhitching will be handled in later part
+        return [input_part]
+    else:
+        subseqs = _split_seq_evenly(input_part.sequence, min_chunk_size, max_chunk_size, use_min)
+
         newFrags = []
         for i in range(len(subseqs)):
             newFrag = ""  # ?????

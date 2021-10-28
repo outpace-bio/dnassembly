@@ -205,52 +205,6 @@ class GGpart():
 
 	################ Other functions #################
 
-	def _split_seq_evenly(self, sequence: str, min_chunk_size: int, max_chunk_size: int) -> List[str]:
-		chunks = []
-		sequence_length = len(sequence)
-		num_chunks = int(sequence_length / min_chunk_size)
-		remaining_seq_length = sequence_length % min_chunk_size
-		optimal_chunk_size = min_chunk_size + math.ceil(remaining_seq_length / float(num_chunks))
-		
-		print("Starting _split_seq_evenly()...")
-		print(f"sequence_length: {sequence_length}, num_chunks: {num_chunks}, remaining_seq_length: {remaining_seq_length}, optimal_chunk_size: {optimal_chunk_size}")
-
-		idx = 0
-		while idx < sequence_length:
-			if idx + optimal_chunk_size < sequence_length:
-				print(f"sequence[{idx}:{idx+optimal_chunk_size}]")
-				chunks.append(sequence[idx:idx+optimal_chunk_size])
-			else:
-				print(f"sequence[{idx}:]")
-				chunks.append(sequence[idx:])
-			idx += optimal_chunk_size
-		return chunks
-
-	def divideBySizeEvenly(self, input_part: Part, min_chunk_size: int = 300-24, max_chunk_size: int = 900-24):
-		"""Return a list of Parts divided by size"""
-		if max_chunk_size >= len(input_part.seq):
-			# junk sequences sandwhitching will be handled in later part
-			return [input_part]
-		else:
-			subseqs = self._split_seq_evenly(input_part.sequence, min_chunk_size, max_chunk_size)
-
-			newFrags = []
-			for i in range(len(subseqs)):
-				newFrag = ""  # ?????
-				if i == 0:
-					lenFiveSeq = len(input_part.fiveprimeOH) + len(input_part.fiveprimeExt)
-					newFrag = Part.GGfrag(fiveprimeOH=input_part.fiveprimeOH, fiveprimeExt=input_part.fiveprimeExt, seq=subseqs[i][lenFiveSeq:], forced_method=input_part.forced_method)
-				elif i == len(subseqs) - 1:
-					lenThreeSeq = len(input_part.threeprimeExt) + len(input_part.threeprimeOH)
-					if lenThreeSeq == 0:
-						newFrag = Part.GGfrag(seq=subseqs[i], forced_method=input_part.forced_method)
-					else:
-						newFrag = Part.GGfrag(seq=subseqs[i][:-lenThreeSeq], threeprimeExt=input_part.threeprimeExt, threeprimeOH=input_part.threeprimeOH, forced_method=input_part.forced_method)
-				else:
-					newFrag = Part.GGfrag(seq=subseqs[i], forced_method=input_part.forced_method)
-				newFrags.append(newFrag)
-			return newFrags
-
 	# REDUNDANT METHOD! - not used anywhere and can be removed
     # Check to make sure input is in the form of DNA letters
 	def _verify_alphabet(sequence):  # todo: what.
@@ -373,7 +327,7 @@ class GGpart():
 		forced_method = ""
 		if self.method == "gBlocks":
 			allowableSize = G_BLOCK_MAX_SIZE - 24
-		elif self.method == "eBlocks":
+		elif self.method in ["eBlocks", "eBlocks-small", "eBlocks-large"]:
 			allowableSize = E_BLOCK_MAX_SIZE - 24
 		elif self.method == "Oligo Assembly":
 			allowableSize = G_BLOCK_MIN_SIZE - 3
@@ -384,9 +338,19 @@ class GGpart():
 		if self.method in ["gBlocks", "Oligo Assembly", "PCA"]:
 			self.GGfrags[0].forced_method = self.method
 			self.GGfrags = divideBySize(self.GGfrags[0], allowableSize)
-		elif self.method in ["eBlocks"]:
+		elif "eBlocks" in self.method:
 			self.GGfrags[0].forced_method = self.method
-			self.GGfrags = self.divideBySizeEvenly(self.GGfrags[0])
+
+			# check if there is a flag to construct smaller eBlock fragments, otherwise larger eBlock fragments
+			# will be generated
+			if "-" in self.method:
+				chunk_size_designation = self.method.split("-", 2)[1]
+				if "small" == chunk_size_designation:
+					self.GGfrags = divideBySizeEvenly(self.GGfrags[0], use_min=True)
+				else:
+					self.GGfrags = divideBySizeEvenly(self.GGfrags[0], use_min=False)
+			else:
+				self.GGfrags = divideBySizeEvenly(self.GGfrags[0], use_min=False)
 		else:
 			#pdb.set_trace()
 			self.GGfrags = divideByIndexTuples(self.GGfrags[0], self.removeRS_tuples) #Uppercase should come from the removeRS
@@ -535,14 +499,14 @@ class GGpart():
 		allowableSize = 0
 		if self.method == "gBlocks":
 			allowableSize = G_BLOCK_MAX_SIZE - 22
-		elif self.method == "eBlocks":
+		elif self.method in ["eBlocks", "eBlocks-small", "eBlocks-large"]:
 			allowableSize = E_BLOCK_MAX_SIZE - 22
 		elif self.method == "Oligo Assembly":
 			allowableSize = G_BLOCK_MIN_SIZE
 
 		#Find possible overhangs at each junction
 		possOHs = []
-		if self.method in ["eBlocks", "gBlocks", "Oligo Assembly"]:
+		if self.method in ["eBlocks", "eBlocks-small", "eBlocks-large", "gBlocks", "Oligo Assembly"]:
 			possOHs = findPossOH_byFragLength(self.GGfrags, allowableSize, annealingLength)
 		else:
 			possOHs = findPossOH_byPrimerLength(self.GGfrags, self.maxPrimerLength - 11, annealingLength, G_BLOCK_MAX_SIZE, self.enzyme)
@@ -636,7 +600,7 @@ class GGpart():
 			if each.forced_method == "gBlocks":
 				primers.append(['',''])
 				methods.append("gBlocks")
-			elif each.forced_method == "eBlocks":
+			elif each.forced_method in ["eBlocks", "eBlocks-small", "eBlocks-large"]:
 				primers.append(['',''])
 				methods.append("eBlocks")
 			elif each.forced_method == "Oligo Assembly":
