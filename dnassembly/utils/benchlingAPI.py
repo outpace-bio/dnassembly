@@ -6,7 +6,7 @@ import os
 baseURL = "https://outpacebio.benchling.com/api/" #realURL
 
 #key = #testkey
-key =  os.environ.get('Benchling_API_Key') #realkey
+key =  os.environ.get('BENCHLING_API_KEY') #realkey
 
 #Define the common parameters for new DNA plasmid sequences
 newSeq = {}
@@ -36,9 +36,7 @@ newPart["registryId"] = "src_oh4knSj0" #Outpace Registry
 newPart["schemaId"] = "ts_2XTP42dt" #ID code for DNA Part
 
 class BadRequestException(Exception):
-    def __init__(self, message, rv):
-        super(BadRequestException, self).__init__(message)
-        self.rv = rv
+    pass
 
 def getBenchling(path, query):
     request = baseURL+'v2/'+path+query
@@ -48,8 +46,7 @@ def getBenchling(path, query):
         raise BadRequestException(
             "Server returned status {}. Response:\n{}".format(
                 r.status_code, json.dumps(r.json())
-            ),
-            r,
+            )
         )
 
     return r.json()
@@ -117,8 +114,7 @@ def postSeqBenchling(bases, name, assembly_type, assembledFrom='', assembledFrom
         raise BadRequestException(
             "Server returned status {}. Response:\n{}".format(
                 r.status_code, json.dumps(r.json())
-            ),
-            r,
+            )
         )
 
     return r.json()
@@ -156,8 +152,7 @@ def postPartBenchling(bases, name, partType):
         raise BadRequestException(
             "Server returned status {}. Response:\n{}".format(
                 r.status_code, json.dumps(r.json())
-            ),
-            r,
+            )
         )
 
     return r.json()
@@ -178,8 +173,7 @@ def searchSeqBenchling(bases):
         raise BadRequestException(
             "Server returned status {}. Response:\n{}".format(
                 r.status_code, json.dumps(r.json())
-            ),
-            r,
+            )
         )
 
     templates = r.json()
@@ -195,7 +189,6 @@ def annotatePartBenchling(seqIDs):
         raise BadRequestException(
             "Server returned status {}. Response:\n{}".format(
                 r.status_code, json.dumps(r.json())
-            ),
-            r,
+            )
         )
     return
