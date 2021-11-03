@@ -128,7 +128,7 @@ tails = {"BsmBI":("GCATCGTCTCA", "TGAGACGGCAT"),
 class GGpart():
 	def __init__(self, partName, leftPartType, rightPartType, seq, part_entry_vector, method=None, fiveprime=None, threeprime=None,
 				 possibleTemplates={}, plasmidName="", inputSeqType="DNA", rsToRemove=["BbsI","BsmBI"], removeHomology=False,
-				 skipPartPlasmid=False, maxPrimerLength=90, databaseTemplates=[], addOHs=[]):
+				 skipPartPlasmid=False, maxPrimerLength=90, databaseTemplates=[], addOHs=[], logger=None):
 		"""
 		:param part_entry_vector: DNAssembly Plasmid
 		"""
@@ -190,7 +190,7 @@ class GGpart():
 				self.assembled_plasmid = self.performPartAssembly(part_entry_vector)
 
 				#List of AssemblyInstruction objects
-				self.fragments = self.getAssemblyInstructions()
+				self.fragments = self.getAssemblyInstructions(logger=logger)
 
 
 	################ Other functions #################
@@ -564,13 +564,13 @@ class GGpart():
 		assembled_part = part_assembly.perform_assembly()
 		return assembled_part
 
-	def getAssemblyInstructions(self):
+	def getAssemblyInstructions(self, logger):
 		assemIns = []
 		primers, methods = self.getPrimersAndMethods()
 		# pdb.set_trace()
 
 		for primer_set, method, fragment in zip(primers, methods, self.GGfrags):
-			assemIns.append(AssemblyInstructions(method, primer_set, fragment, self.possibleTemplates))
+			assemIns.append(AssemblyInstructions(method, primer_set, fragment, self.possibleTemplates, logger))
 		return assemIns
 
 	def getPrimersAndMethods(self): #Can a single fragment have multiple assembly methods/primers?
