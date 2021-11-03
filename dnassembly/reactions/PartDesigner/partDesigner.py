@@ -39,6 +39,7 @@ gBlockMaxSize = 3000 # make an attribute of ggpart class (be able to update to 9
 eBlockMaxSize = 900
 PCAMaxSize = 800
 gBlockMinSize = 125 # make an attribute of ggpart class
+eBlockMinSize = 300
 oligoAssemblySize = 125
 annealingLength = 20
 oligoTM = 48
@@ -320,7 +321,7 @@ class GGpart():
 		forced_method = ""
 		if self.method == "gBlocks":
 			allowableSize = gBlockMaxSize - 24
-		elif self.method == "eBlocks":
+		elif self.method in ["eBlocks", "eBlocks-small", "eBlocks-large"]:
 			allowableSize = eBlockMaxSize - 24
 		elif self.method == "Oligo Assembly":
 			allowableSize = gBlockMinSize - 3
@@ -328,9 +329,21 @@ class GGpart():
 			allowableSize = PCAMaxSize - 24
 
 		# Divide the initialized GGfrag into chunks based on assembly method
-		if self.method in ["eBlocks", "gBlocks", "Oligo Assembly", "PCA"]:
+		if self.method in ["gBlocks", "Oligo Assembly", "PCA"]:
 			self.GGfrags[0].forced_method = self.method
 			self.GGfrags = divideBySize(self.GGfrags[0], allowableSize)
+		elif "eBlocks" in self.method:
+			self.GGfrags[0].forced_method = self.method
+			# check if there is a flag to construct smaller eBlock fragments, otherwise larger eBlock fragments
+			# will be generated
+			if "-" in self.method:
+				chunk_size_designation = self.method.split("-", 2)[1]
+				if "small" == chunk_size_designation:
+					self.GGfrags = divideBySizeEvenly(self.GGfrags[0], min_chunk_size=gBlockMinSize-3, max_chunk_size=eBlockMaxSize-24, use_min=True)
+				else:
+					self.GGfrags = divideBySizeEvenly(self.GGfrags[0], min_chunk_size=gBlockMinSize-3, max_chunk_size=eBlockMaxSize-24, use_min=False)
+			else:
+				self.GGfrags = divideBySizeEvenly(self.GGfrags[0], min_chunk_size=gBlockMinSize-3, max_chunk_size=eBlockMaxSize-24, use_min=False)
 		else:
 			#pdb.set_trace()
 			self.GGfrags = divideByIndexTuples(self.GGfrags[0], self.removeRS_tuples) #Uppercase should come from the removeRS
@@ -466,14 +479,14 @@ class GGpart():
 		allowableSize = 0
 		if self.method == "gBlocks":
 			allowableSize = gBlockMaxSize - 22
-		elif self.method == "eBlocks":
+		elif self.method in ["eBlocks", "eBlocks-small", "eBlocks-large"]:
 			allowableSize = eBlockMaxSize - 22
 		elif self.method == "Oligo Assembly":
 			allowableSize = gBlockMinSize
 
 		#Find possible overhangs at each junction
 		possOHs = []
-		if self.method in ["eBlocks", "gBlocks", "Oligo Assembly"]:
+		if self.method in ["eBlocks", "eBlocks-small", "eBlocks-large", "gBlocks", "Oligo Assembly"]:
 			possOHs = findPossOH_byFragLength(self.GGfrags, allowableSize, annealingLength)
 		else:
 			possOHs = findPossOH_byPrimerLength(self.GGfrags, self.maxPrimerLength - 11, annealingLength, gBlockMaxSize, self.enzyme)
@@ -567,7 +580,7 @@ class GGpart():
 			if each.forced_method == "gBlocks":
 				primers.append(['',''])
 				methods.append("gBlocks")
-			elif each.forced_method == "eBlocks":
+			elif each.forced_method in ["eBlocks", "eBlocks-small", "eBlocks-large"]:
 				primers.append(['',''])
 				methods.append("eBlocks")
 			elif each.forced_method == "Oligo Assembly":
