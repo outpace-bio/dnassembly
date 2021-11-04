@@ -31,7 +31,7 @@ class AssemblyInstructions():
 
 		if self.method not in ["PCR", "gBlocks", "eBlocks", "PCA"]:
 			self.product = relevant_seq
-		elif self.method == "eBlocks" and len(relevant_seq) < 300:
+		elif self.method == "eBlocks" and (len(tails[0]) + len(relevant_seq) + len(tails[1])) < 300:
 			eblock_relevant_seq = tails[0] + relevant_seq + tails[1]
 			padding = int(math.ceil((300 - len(eblock_relevant_seq))/2))
 			if logger:
