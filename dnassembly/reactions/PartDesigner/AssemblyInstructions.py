@@ -23,27 +23,31 @@ class AssemblyInstructions():
 		relevant_seq = GGfrag.fiveprimeOH + GGfrag.fiveprimeExt + GGfrag.seq + GGfrag.threeprimeExt + GGfrag.threeprimeOH
 
 		if logger:
-			logger.info(f"self.method == {self.method} and seq size = {len(relevant_seq)}")
+			logger.info(f"self.method == {self.method} and seq size = {len(GGfrag.seq)}")
+			logger.info(f"{tails[0]} + {GGfrag.fiveprimeOH} + {GGfrag.fiveprimeExt} + {GGfrag.seq} + {GGfrag.threeprimeExt} + {GGfrag.threeprimeOH} + {tails[1]}")
 		else:
-			print(f"self.method == {self.method} and seq size = {len(relevant_seq)}")
+			print(f"self.method == {self.method} and seq size = {len(GGfrag.seq)}")
+			print(f"{tails[0]} + {GGfrag.fiveprimeOH} + {GGfrag.fiveprimeExt} + {GGfrag.seq} + {GGfrag.threeprimeExt} + {GGfrag.threeprimeOH} + {tails[1]}")
 
 		if self.method not in ["PCR", "gBlocks", "eBlocks", "PCA"]:
 			self.product = relevant_seq
 		elif self.method == "eBlocks" and len(relevant_seq) < 300:
-			padding = int(math.ceil((300 - len(relevant_seq))/2))
+			eblock_relevant_seq = tails[0] + relevant_seq + tails[1]
+			padding = int(math.ceil((300 - len(eblock_relevant_seq))/2))
 			if logger:
 				logger.info(f"self.pad_4772_us[-{padding}:] + relevant_seq + self.pad_4772_ds[:{padding}]")
 			else:
 				print(f"self.pad_4772_us[-{padding}:] + relevant_seq + self.pad_4772_ds[:{padding}]")
 			
-			self.product = self.pad_4772_us[-padding:] + relevant_seq + self.pad_4772_ds[:padding]
+			self.product = self.pad_4772_us[-padding:] + eblock_relevant_seq + self.pad_4772_ds[:padding]
 			if logger:
 				logger.info(f"product length: {len(self.product)}")
 			else:
 				print(f"product length: {len(self.product)}")
 		else:
-			self.product = tails[0] + GGfrag.fiveprimeOH + GGfrag.fiveprimeExt + GGfrag.seq + GGfrag.threeprimeExt + GGfrag.threeprimeOH + tails[1]
-			self.digest = GGfrag.fiveprimeOH + GGfrag.fiveprimeExt + GGfrag.seq + GGfrag.threeprimeExt + GGfrag.threeprimeOH
+			
+			self.product = tails[0] + relevant_seq + tails[1]
+			self.digest = relevant_seq
 
 		self.template = ""
 		self.templateSeq = ""
