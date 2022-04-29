@@ -6,6 +6,8 @@ Remove restriction site from sequence
 Modified from code originally written by Will DeLoache.
 """
 
+import re
+
 from Bio.Seq import Seq
 from Bio.Restriction import Restriction, FormattedSeq
 
@@ -145,9 +147,9 @@ def removeRS(seq, enzymes):
         mutated = False
         for enzyme_name in enzymes:
             enzyme = getattr(Restriction, enzyme_name)
-            while findSite(seq, enzyme):
-                leftIndex = findSite(seq.lower(), enzyme)
-                rightIndex = leftIndex + len(enzyme.site)
+            for site_index in enzyme.search(Seq(seq)):
+                leftIndex = site_index - len(enzyme.site)
+                rightIndex = site_index
                 seq = silentMutate(seq, leftIndex, rightIndex, enzyme_list=enzymes)
                 removeRS_tuples.append((leftIndex, rightIndex))
                 mutated = True
